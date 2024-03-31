@@ -1,6 +1,7 @@
 import pywt
 
-from biosppy import ecg, tools
+# from biosppy import ecg, tools
+import biosppy
 import numpy as np
 import pandas as pd
 import scipy
@@ -26,9 +27,9 @@ def cal_statistics(signal):
 
 def extract_lead_heart_rate(signal, sampling_rate):
     # extract heart rate for single-lead ECG: may return empty list
-    rpeaks, = ecg.hamilton_segmenter(signal=signal, sampling_rate=sampling_rate)
-    rpeaks, = ecg.correct_rpeaks(signal=signal, rpeaks=rpeaks, sampling_rate=sampling_rate, tol=0.05)
-    _, heartrates = tools.get_heart_rate(beats=rpeaks, sampling_rate=500, smooth=True, size=3)
+    rpeaks, = biosppy.signals.ecg.hamilton_segmenter(signal=signal, sampling_rate=sampling_rate)
+    rpeaks, = biosppy.signals.ecg.correct_rpeaks(signal=signal, rpeaks=rpeaks, sampling_rate=sampling_rate, tol=0.05)
+    _, heartrates = biosppy.signals.tools.get_heart_rate(beats=rpeaks, sampling_rate=500, smooth=True, size=3)
     return list(heartrates / 100) # divided by 100
 
 
@@ -56,7 +57,7 @@ def extract_features(ecg_data, sampling_rate=500):
     # may include heart rates later
     all_features = []
     # comment out below line to extract heart rates
-    all_features += extract_heart_rates(ecg_data, sampling_rate=sampling_rate)
+    # all_features += extract_heart_rates(ecg_data, sampling_rate=sampling_rate)
     for signal in ecg_data.T:
         all_features += extract_lead_features(signal)
     return all_features
