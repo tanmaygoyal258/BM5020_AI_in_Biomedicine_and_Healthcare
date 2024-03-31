@@ -5,13 +5,15 @@ import pandas as pd
 from glob import glob
 import argparse
 import os
+from tqdm import tqdm
 
 
 def gen_reference_csv(data_dir, reference_csv):
     if not os.path.exists(reference_csv):
+        print("Generating reference csv...")
         recordpaths = glob(os.path.join(data_dir, '*.hea'))
         results = []
-        for recordpath in recordpaths:
+        for recordpath in tqdm(recordpaths):
             patient_id = recordpath.split('/')[-1][:-4]
             _, meta_data = wfdb.rdsamp(recordpath[:-4])
             sample_rate = meta_data['fs']
@@ -31,7 +33,7 @@ def gen_label_csv(label_csv, reference_csv, dx_dict, classes):
     if not os.path.exists(label_csv):
         results = []
         df_reference = pd.read_csv(reference_csv)
-        for _, row in df_reference.iterrows():
+        for _, row in tqdm(df_reference.iterrows()):
             patient_id = row['patient_id']
             dxs = [dx_dict.get(code, '') for code in row['dx'].split(',')]
             labels = [0] * 9

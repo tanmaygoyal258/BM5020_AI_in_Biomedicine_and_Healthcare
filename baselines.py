@@ -31,6 +31,7 @@ def generate_features_csv(features_csv, data_dir, patient_ids):
     print('Generating expert features...')
     ecg_features = []
     for patient_id in tqdm(patient_ids):
+        print(patient_id)
         ecg_data, _ = wfdb.rdsamp(os.path.join(data_dir, patient_id))
         ecg_features.append(extract_features(ecg_data))
     df = pd.DataFrame(ecg_features, index=patient_ids)
