@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import psutil
 
 from tqdm import tqdm
 import numpy as np
@@ -85,9 +86,9 @@ if __name__ == "__main__":
     database = os.path.basename(data_dir)
 
     if not args.model_path:
-        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}.pth'
+        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}_{args.epochs}.pth'
 
-    if args.use_gpu and torch.backends.mps.is_available()::
+    if args.use_gpu and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
         device = 'cpu'
@@ -117,9 +118,11 @@ if __name__ == "__main__":
     if args.phase == 'train':
         if args.resume:
             net.load_state_dict(torch.load(args.model_path, map_location=device))
+        p = psutil.Process()
         for epoch in range(args.epochs):
             train(train_loader, net, args, criterion, epoch, scheduler, optimizer, device)
             evaluate(val_loader, net, args, criterion, device)
+            # might have to increase number of files that can be opened using ulimit -n            
     else:
         net.load_state_dict(torch.load(args.model_path, map_location=device))
         evaluate(test_loader, net, args, criterion, device)
