@@ -8,9 +8,9 @@ data/**/*.hea
 data/**/*.csv
 imgs/*.png
 models/*.pth
-results/*.png
-results/*.csv
-results/*.npy
+results_CPSC/*.png
+results_CPSC/*.csv
+results_CPSC/*.npy
 logs/ecg-*
 logs/*.log
 logs/*.csv
