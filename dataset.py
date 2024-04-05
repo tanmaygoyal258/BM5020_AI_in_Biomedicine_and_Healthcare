@@ -32,7 +32,7 @@ class ECGDataset(Dataset):
         super(ECGDataset, self).__init__()
         self.phase = phase
         df = pd.read_csv(label_csv)
-        df = df[df['fold'].isin(folds)]
+        df = df[df['fold'].isin(folds)] if folds is not None else df
         self.data_dir = data_dir
         self.labels = df
         self.leads = ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6']

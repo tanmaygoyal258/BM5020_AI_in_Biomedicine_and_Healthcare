@@ -4,13 +4,14 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.metrics import confusion_matrix
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from resnet import resnet34
-from dataset import ECGDataset
+from dataset_PTB_XL import PTB_XL_dataset
 from utils import cal_scores, find_optimal_threshold, split_data
 
 
@@ -115,9 +116,7 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = os.path.normpath(args.data_dir)
     database = os.path.basename(data_dir)
-    if not args.model_path:
-        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}_{args.epochs}.pth'
-    args.threshold_path = f'models/{database}-threshold.pkl'
+    args.model_path = "/Users/tanmaygoyal/Desktop/Assignments and Events/Biomedicine/ECG_Project/models/resnet34_CPSC_all_42_30.pth"
     if args.use_gpu and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
@@ -136,19 +135,19 @@ if __name__ == "__main__":
     net.load_state_dict(torch.load(args.model_path, map_location=device))
     net.eval()
 
-    train_folds, val_folds, test_folds = split_data(seed=args.seed)
-    train_dataset = ECGDataset('train', data_dir, label_csv, train_folds, leads)
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-    val_dataset = ECGDataset('val', data_dir, label_csv, val_folds, leads)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    test_dataset = ECGDataset('test', data_dir, label_csv, test_folds, leads)
+    print("Model has been loaded...")
+
+    test_dataset = PTB_XL_dataset('test', data_dir, label_csv, None, leads)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
-    thresholds = get_thresholds(val_loader, net, device, args.threshold_path)
-    print('Thresholds:', thresholds)
+    print("Test dataset has been loaded...")
+    output_dict = {'patient_id' : [] , "predicted_output" : []}
+    for _, (p_id, data, label) in enumerate(tqdm(test_loader)):
+        data, labels = data.to(device), label.to(device)
+        output = net(data)
+        output = torch.sigmoid(output)
+        output_dict['patient_id'].append(p_id) 
+        output_dict['predicted_output'].append(output.data.cpu().numpy())
 
-    print('Results on validation data:')
-    apply_thresholds(val_loader, net, device, thresholds)
-
-    print('Results on test data:')
-    apply_thresholds(test_loader, net, device, thresholds)
+    df = pd.DataFrame(output_dict)
+    df.to_csv("/Users/tanmaygoyal/Desktop/Assignments and Events/Biomedicine/ECG_Project/data/PTB_XL/predicted_output_original.csv" , index = False , header = True)
