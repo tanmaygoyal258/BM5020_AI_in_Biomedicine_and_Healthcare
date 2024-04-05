@@ -9,6 +9,7 @@ data/**/*.csv
 data/**/RECORDS
 imgs/*.png
 models/*.pth
+models/*.pkl
 results_CPSC/*.png
 results_CPSC/*.csv
 results_CPSC/*.npy

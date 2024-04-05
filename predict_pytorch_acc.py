@@ -46,7 +46,7 @@ def get_thresholds(val_loader, net, device, threshold_path):
         y_score = y_scores[:, i]
         threshold = find_optimal_threshold(y_true, y_score)
         thresholds.append(threshold)
-    # pickle.dump(thresholds, open(threshold_path, 'wb'))
+    pickle.dump(thresholds, open(threshold_path, 'wb'))
     return thresholds
 
 

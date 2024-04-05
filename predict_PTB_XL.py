@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument('--num-workers', type=int, default=4, help='Number of workers to load data')
     parser.add_argument('--use-gpu', default=False, action='store_true', help='Use gpu')
     parser.add_argument('--model-path', type=str, default='', help='Path to saved model')
+    parser.add_argument('--threshold-path' , type=str , default='', help="Path to saved thresholds")
     return parser.parse_args()
 
 
@@ -116,7 +117,10 @@ if __name__ == "__main__":
     args = parse_args()
     data_dir = os.path.normpath(args.data_dir)
     database = os.path.basename(data_dir)
-    args.model_path = "/Users/tanmaygoyal/Desktop/Assignments and Events/Biomedicine/ECG_Project/models/resnet34_CPSC_all_42_30.pth"
+    if not args.model_path:
+        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}_{args.epochs}.pth'
+    if not args.threshold_path:
+        args.threshold_path = f'models/{database}-threshold.pkl'
     if args.use_gpu and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
