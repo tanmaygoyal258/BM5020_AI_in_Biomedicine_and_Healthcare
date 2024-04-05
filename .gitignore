@@ -6,8 +6,7 @@ data/CPSC
 data/**/*.mat
 data/**/*.hea
 data/**/*.csv
-data/PTB_XL/**/*.hea
-data/PTB_XL/**/*.dat
+data/**/RECORDS
 imgs/*.png
 models/*.pth
 results_CPSC/*.png
@@ -19,3 +18,4 @@ logs/*.log
 logs/*.csv
 shap/*.png
 plots/*.png
+PTB_XL_notes.txt
