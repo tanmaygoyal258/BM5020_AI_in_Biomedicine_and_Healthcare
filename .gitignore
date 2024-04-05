@@ -6,6 +6,8 @@ data/CPSC
 data/**/*.mat
 data/**/*.hea
 data/**/*.csv
+data/PTB_XL/**/*.hea
+data/PTB_XL/**/*.dat
 imgs/*.png
 models/*.pth
 results_CPSC/*.png
