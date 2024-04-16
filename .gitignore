@@ -17,6 +17,6 @@ results_CPSC/*.txt
 logs/ecg-*
 logs/*.log
 logs/*.csv
-shap/*.png
+shap/**/*.png
 plots/*.png
 PTB_XL_notes.txt
