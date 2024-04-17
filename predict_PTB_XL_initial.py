@@ -17,7 +17,7 @@ from utils import cal_scores, find_optimal_threshold, split_data
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-dir', type=str, default='data/CPSC', help='Directory to data dir')
+    parser.add_argument('--data-dir', type=str, default='data/PTB_XL', help='Directory to data dir')
     parser.add_argument('--leads', type=str, default='all', help='ECG leads to use')
     parser.add_argument('--seed', type=int, default=42, help='Seed to split data')
     parser.add_argument('--epochs', type=int, default=40, help='Training epochs to identify model')
@@ -109,7 +109,7 @@ def plot_cm(y_trues, y_preds, normalize=True, cmap=plt.cm.Blues):
                         color="white" if cm[i, j] > thresh else "black")
         np.set_printoptions(precision=3)
         fig.tight_layout()
-        plt.savefig(f'results_CPSC/{label}.png')
+        plt.savefig(f'results_PTB_XL_initial/{label}.png')
         plt.close(fig)
 
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         leads = args.leads.split(',')
         nleads = len(leads)
     data_dir = args.data_dir
-    label_csv = os.path.join(data_dir, 'labels.csv')
+    label_csv = os.path.join(data_dir, 'labels_final_mapping.csv')
     
     net = resnet34(input_channels=nleads).to(device)
     net.load_state_dict(torch.load(args.model_path, map_location=device))
@@ -145,13 +145,8 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
     print("Test dataset has been loaded...")
-    output_dict = {'patient_id' : [] , "predicted_output" : []}
-    for _, (p_id, data, label) in enumerate(tqdm(test_loader)):
-        data, labels = data.to(device), label.to(device)
-        output = net(data)
-        output = torch.sigmoid(output)
-        output_dict['patient_id'].append(p_id) 
-        output_dict['predicted_output'].append(output.data.cpu().numpy())
-
-    df = pd.DataFrame(output_dict)
-    df.to_csv("/Users/tanmaygoyal/Desktop/Assignments and Events/Biomedicine/ECG_Project/data/PTB_XL/predicted_output_original.csv" , index = False , header = True)
+    
+    thresholds = get_thresholds(test_loader, net, device, args.threshold_path)   
+    print('Thresholds:', thresholds)
+    apply_thresholds(test_loader, net, device, thresholds)
+        

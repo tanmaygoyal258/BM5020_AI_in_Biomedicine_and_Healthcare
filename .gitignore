@@ -6,6 +6,7 @@ data/CPSC
 data/**/*.mat
 data/**/*.hea
 data/**/*.csv
+data/**/*.txt
 data/**/RECORDS
 imgs/*.png
 models/*.pth
@@ -14,6 +15,10 @@ results_CPSC/*.png
 results_CPSC/*.csv
 results_CPSC/*.npy
 results_CPSC/*.txt
+results_PTB_XL_initial/*.png
+results_PTB_XL_initial/*.csv
+results_PTB_XL_initial/*.npy
+results_PTB_XL_initial/*.txt
 logs/ecg-*
 logs/*.log
 logs/*.csv

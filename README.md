@@ -53,3 +53,9 @@ $ python predict.py --data-dir data/CPSC --leads all --use-gpu # evaluation
 ```sh
 $ python shap_values.py --data-dir data/CPSC --use-gpu # visualizing shap values
 ```
+
+# Predicting for PTB_Xl on original model
+```sh
+$ python3 predict_PTB_XL.py --epochs 30 --use-gpu --model-path models/resnet34_CPSC_all_42_30.pth --threshold-path models/CPSC-threshold.pkl
+```
+
