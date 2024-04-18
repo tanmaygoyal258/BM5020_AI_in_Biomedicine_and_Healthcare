@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('--num-workers', type=int, default=4, help='Number of workers to load data')
     parser.add_argument('--use-gpu', default=False, action='store_true', help='Use gpu')
     parser.add_argument('--model-path', type=str, default='', help='Path to saved model')
+    parser.add_argument('--threshold-path', type=str, default='', help='Path to saved model')
     return parser.parse_args()
 
 
@@ -46,7 +47,7 @@ def get_thresholds(val_loader, net, device, threshold_path):
         y_score = y_scores[:, i]
         threshold = find_optimal_threshold(y_true, y_score)
         thresholds.append(threshold)
-    pickle.dump(thresholds, open(threshold_path, 'wb'))
+    # pickle.dump(thresholds, open(threshold_path, 'wb'))
     return thresholds
 
 
@@ -107,7 +108,7 @@ def plot_cm(y_trues, y_preds, normalize=True, cmap=plt.cm.Blues):
                         color="white" if cm[i, j] > thresh else "black")
         np.set_printoptions(precision=3)
         fig.tight_layout()
-        plt.savefig(f'results_CPSC/{label}.png')
+        # plt.savefig(f'results_CPSC/{label}.png')
         plt.close(fig)
 
 
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     database = os.path.basename(data_dir)
     if not args.model_path:
         args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}_{args.epochs}.pth'
-    args.threshold_path = f'models/{database}-threshold.pkl'
+    # args.threshold_path = f'models/{database}-threshold.pkl'
     if args.use_gpu and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:

@@ -4,14 +4,13 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn.metrics import confusion_matrix
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from resnet import resnet34
-from dataset_PTB_XL import PTB_XL_dataset
+from dataset_ptb_xl import PTB_XL_dataset
 from utils import cal_scores, find_optimal_threshold, split_data
 
 
@@ -25,7 +24,7 @@ def parse_args():
     parser.add_argument('--num-workers', type=int, default=4, help='Number of workers to load data')
     parser.add_argument('--use-gpu', default=False, action='store_true', help='Use gpu')
     parser.add_argument('--model-path', type=str, default='', help='Path to saved model')
-    parser.add_argument('--threshold-path' , type=str , default='', help="Path to saved thresholds")
+    parser.add_argument('--threshold-path', type=str, default='', help='Path to saved model')
     return parser.parse_args()
 
 
@@ -109,7 +108,7 @@ def plot_cm(y_trues, y_preds, normalize=True, cmap=plt.cm.Blues):
                         color="white" if cm[i, j] > thresh else "black")
         np.set_printoptions(precision=3)
         fig.tight_layout()
-        plt.savefig(f'results_PTB_XL_initial/{label}.png')
+        # plt.savefig(f'results_CPSC/{label}.png')
         plt.close(fig)
 
 
@@ -119,8 +118,7 @@ if __name__ == "__main__":
     database = os.path.basename(data_dir)
     if not args.model_path:
         args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}_{args.epochs}.pth'
-    if not args.threshold_path:
-        args.threshold_path = f'models/{database}-threshold.pkl'
+    # args.threshold_path = f'models/{database}-threshold.pkl'
     if args.use_gpu and torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
@@ -133,20 +131,25 @@ if __name__ == "__main__":
         leads = args.leads.split(',')
         nleads = len(leads)
     data_dir = args.data_dir
-    label_csv = os.path.join(data_dir, 'labels_with_final_mapping.csv')
+    label_csv = os.path.join(data_dir, 'labels_with_mapping_final.csv')
     
     net = resnet34(input_channels=nleads).to(device)
     net.load_state_dict(torch.load(args.model_path, map_location=device))
     net.eval()
 
-    print("Model has been loaded...")
-
-    test_dataset = PTB_XL_dataset('test', data_dir, label_csv, None, leads)
+    train_folds, val_folds, test_folds = split_data(seed=args.seed)
+    train_dataset = PTB_XL('train', data_dir, label_csv, train_folds, leads)
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+    val_dataset = PTB_XL('val', data_dir, label_csv, val_folds, leads)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
+    test_dataset = PTB_XL('test', data_dir, label_csv, test_folds, leads)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
-    print("Test dataset has been loaded...")
-    
-    thresholds = get_thresholds(test_loader, net, device, args.threshold_path)   
+    thresholds = get_thresholds(val_loader, net, device, args.threshold_path)
     print('Thresholds:', thresholds)
+
+    print('Results on validation data:')
+    apply_thresholds(val_loader, net, device, thresholds)
+
+    print('Results on test data:')
     apply_thresholds(test_loader, net, device, thresholds)
-        

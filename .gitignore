@@ -19,6 +19,10 @@ results_PTB_XL_initial/*.png
 results_PTB_XL_initial/*.csv
 results_PTB_XL_initial/*.npy
 results_PTB_XL_initial/*.txt
+results_cpsc&ptb_xl/*.png
+results_cpsc&ptb_xl/*.csv
+results_cpsc&ptb_xl/*.npy
+results_cpsc&ptb_xl/*.txt
 logs/ecg-*
 logs/*.log
 logs/*.csv
