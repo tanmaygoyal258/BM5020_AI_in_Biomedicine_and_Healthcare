@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from resnet import resnet34
-from dataset_ptb_xl import PTB_XL_dataset
+from dataset_combined import Combined_dataset
 from utils import cal_scores, find_optimal_threshold, split_data
 
 
@@ -131,18 +131,18 @@ if __name__ == "__main__":
         leads = args.leads.split(',')
         nleads = len(leads)
     data_dir = args.data_dir
-    label_csv = os.path.join(data_dir, 'labels_with_mapping_final.csv')
+    label_csv = os.path.join(data_dir, 'labels_combined.csv')
     
     net = resnet34(input_channels=nleads).to(device)
     net.load_state_dict(torch.load(args.model_path, map_location=device))
     net.eval()
 
     train_folds, val_folds, test_folds = split_data(seed=args.seed)
-    train_dataset = PTB_XL('train', data_dir, label_csv, train_folds, leads)
+    train_dataset = Combined_dataset('train', data_dir, label_csv, train_folds, leads)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-    val_dataset = PTB_XL('val', data_dir, label_csv, val_folds, leads)
+    val_dataset = Combined_dataset('val', data_dir, label_csv, val_folds, leads)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    test_dataset = PTB_XL('test', data_dir, label_csv, test_folds, leads)
+    test_dataset = Combined_dataset('test', data_dir, label_csv, test_folds, leads)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     
     thresholds = get_thresholds(val_loader, net, device, args.threshold_path)
