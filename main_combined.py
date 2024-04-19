@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--resume', default=False, action='store_true', help='Resume')
     parser.add_argument('--use-gpu', default=False, action='store_true', help='Use GPU')
     parser.add_argument('--original-model-path', type=str, default='', help='Path to saved model')
-    parser.add_argument('--new_model_path', type=str, default='', help='Path to save new model')
+    parser.add_argument('--new-model-path', type=str, default='', help='Path to save new model')
     return parser.parse_args()
 
 
@@ -113,11 +113,11 @@ if __name__ == "__main__":
     
     # we continue with ECG Dataset class since our data has been converted into the same format
     train_folds, val_folds, test_folds = split_data(seed=args.seed)
-    train_dataset = PTB_XL_dataset('train', data_dir, label_csv, train_folds, leads)
+    train_dataset = Combined_dataset('train', data_dir, label_csv, train_folds, leads)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-    val_dataset = PTB_XL_dataset('val', data_dir, label_csv, val_folds, leads)
+    val_dataset = Combined_dataset('val', data_dir, label_csv, val_folds, leads)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
-    test_dataset = PTB_XL_dataset('test', data_dir, label_csv, test_folds, leads)
+    test_dataset = Combined_dataset('test', data_dir, label_csv, test_folds, leads)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
     net = resnet34(input_channels=nleads).to(device)
     optimizer = torch.optim.Adam(net.parameters(), lr=args.lr)

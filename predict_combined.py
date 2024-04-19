@@ -16,7 +16,7 @@ from utils import cal_scores, find_optimal_threshold, split_data
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-dir', type=str, default='data/PTB_XL', help='Directory to data dir')
+    parser.add_argument('--data-dir', type=str, default='data/combined_data', help='Directory to data dir')
     parser.add_argument('--leads', type=str, default='all', help='ECG leads to use')
     parser.add_argument('--seed', type=int, default=42, help='Seed to split data')
     parser.add_argument('--epochs', type=int, default=40, help='Training epochs to identify model')
