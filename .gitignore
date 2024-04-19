@@ -23,6 +23,10 @@ results_cpsc&ptb_xl/*.png
 results_cpsc&ptb_xl/*.csv
 results_cpsc&ptb_xl/*.npy
 results_cpsc&ptb_xl/*.txt
+results_combined/*.png
+results_combined/*.csv
+results_combined/*.npy
+results_combined/*.txt
 logs/ecg-*
 logs/*.log
 logs/*.csv
