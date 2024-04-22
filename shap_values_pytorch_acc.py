@@ -67,12 +67,12 @@ def summary_plot(svs, y_scores,database):
     plt.clf()
 
 
-def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database):
+def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database = None):
     # population-level interpretation
     leads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
     n = y_scores.shape[0]
     results = [[], [], [], [], [], [], [], [], []]
-    print(svs.shape)
+    
     for i in tqdm(range(n)):
         label = np.argmax(y_scores[i])
         results[label].append(svs[label, i])
@@ -81,7 +81,10 @@ def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database):
         result = np.array(results[label])
         y = []
         for i, _ in enumerate(leads):
-            y.append(result[:,i].sum())
+            try:
+                y.append(result[:,i].sum())
+            except:
+                y.append(0)
         y = np.array(y) / np.sum(y)
         ys.append(y)
         plt.plot(leads, y)
@@ -105,7 +108,7 @@ def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database):
                     color='white' if ys[i, j] > thresh else 'black')
     np.set_printoptions(precision=2)
     fig.tight_layout()
-    plt.savefig('./shap/{database}/shap2.png')
+    plt.savefig(f'./shap/{database}/shap2.png')
     plt.clf()
     
 
@@ -138,8 +141,8 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model.eval()
 
-    background = 100
-    result_path = f'results/{database}/A{background * 2}.npy'
+    background = 1
+    result_path = f'results_{database}/A{background * 2}.npy'
 
     df_labels = pd.read_csv(label_csv , dtype = {"patient_id" : str})
     df_reference = pd.read_csv(os.path.join(args.data_dir, args.reference_file_name) , dtype = {"patient_id" : str})
@@ -156,9 +159,9 @@ if __name__ == '__main__':
     
     e = shap.GradientExplainer(model, background_inputs)
 
+    svs = []
+    y_scores = []
     if not os.path.exists(result_path):
-        svs = []
-        y_scores = []
         for patient_id in tqdm(to_explain):
             input = os.path.join(data_dir, patient_id)
             inputs = torch.stack([torch.from_numpy(prepare_input(input)).float()]).to(device)
@@ -167,22 +170,26 @@ if __name__ == '__main__':
             svs.append(sv)
         svs = np.concatenate(svs, axis=1)
         y_scores = np.concatenate(y_scores, axis=0)
-        np.save(result_path, (svs, y_scores))
-    svs, y_scores = np.load(result_path, allow_pickle=True)
-
+        # np.save(result_path, (svs, y_scores))
+    # svs, y_scores = np.load(result_path, allow_pickle=True)
+    svs = np.array(svs)
+    y_scores = np.array(y_scores)
+    
     # summary_plot(svs, y_scores)
-    plot_shap2(svs, y_scores , database)
+    plot_shap2(svs, y_scores , database = database)
 
     preds = []
     top_leads_list = []
-    for i, patient_id in enumerate(to_explain):
-        ecg_data = prepare_input(os.path.join(data_dir, patient_id))
-        label_idx = np.argmax(y_scores[i])
-        sv_data = svs[label_idx, i]
-        
-        sv_data_mean = np.mean(sv_data, axis=1)
-        top_leads = np.where(sv_data_mean > 1e-4)[0] # select top leads
-        preds.append(classes[label_idx])
-        print(patient_id, classes[label_idx], lleads[top_leads])
+    with open(f'shap/{database}/top_leads_list', 'w') as f:
+        for i, patient_id in enumerate(to_explain):
+            ecg_data = prepare_input(os.path.join(data_dir, patient_id))
+            label_idx = np.argmax(y_scores[i])
+            sv_data = svs[label_idx, i]
+            
+            sv_data_mean = np.mean(sv_data, axis=1)
+            top_leads = np.where(sv_data_mean > 1e-4)[0] # select top leads
+            preds.append(classes[label_idx])
+            f.write(f'{patient_id} , {classes[label_idx]} , {lleads[top_leads]}')
+            f.write("\n")
 
         plot_shap(ecg_data, sv_data, top_leads, patient_id, classes[label_idx] , database)
