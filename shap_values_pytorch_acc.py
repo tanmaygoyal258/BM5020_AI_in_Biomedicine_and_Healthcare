@@ -141,8 +141,8 @@ if __name__ == '__main__':
     background = 100
     result_path = f'results/{database}/A{background * 2}.npy'
 
-    df_labels = pd.read_csv(label_csv)
-    df_reference = pd.read_csv(os.path.join(args.data_dir, 'reference.csv'))
+    df_labels = pd.read_csv(label_csv , dtype = {"patient_id" : str})
+    df_reference = pd.read_csv(os.path.join(args.data_dir, args.reference_file_name) , dtype = {"patient_id" : str})
     df = pd.merge(df_labels, df_reference[['patient_id', 'age', 'sex', 'signal_len']], on='patient_id', how='left')
 
     # df = df[df['signal_len'] >= 15000]
