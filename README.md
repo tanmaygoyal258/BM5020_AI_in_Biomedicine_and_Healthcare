@@ -60,6 +60,10 @@ $ python3 predict_PTB_XL.py --epochs 30 --use-gpu --model-path models/resnet34_C
 ```
 # Retraining original model on PTB_XL data;
 ```sh
-$ python3 main_retraining.py --epochs 30 --resume --use-gpu --original-model-path models/resnet34_CPSC_all_42_30.pth --epochs 40
+$ python3 main_retraining.py --epochs 30 --resume --use-gpu --original-model-path models/resnet34_CPSC_all_42_30.pth 
 ```
 
+# Creating model on both datasets from scratch
+```sh
+$ python3 main_combined.py --data-dir data/combined_data --epochs 30 --use-gpu 
+```

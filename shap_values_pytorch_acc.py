@@ -18,10 +18,13 @@ def parse_args():
     parser.add_argument('--leads', type=str, default='all')
     parser.add_argument('--seed', type=int, default=42, help='Seed to split data')
     parser.add_argument('--use-gpu', default=False, action='store_true', help='Use GPU')
+    parser.add_argument('--model-path' , default = None)
+    parser.add_argument('--label-file-name', default=None)
+    parser.add_argument('--reference-file-name', default=None)
     return parser.parse_args()
 
 
-def plot_shap(ecg_data, sv_data, top_leads, patient_id, label):
+def plot_shap(ecg_data, sv_data, top_leads, patient_id, label , database):
     # patient-level interpretation along with raw ECG data
     leads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
     nleads = len(top_leads)
@@ -45,11 +48,11 @@ def plot_shap(ecg_data, sv_data, top_leads, patient_id, label):
         axe.set_xticks([])
         axe.set_yticks([])
         axe.set_ylabel(leads[lead])
-    plt.savefig(f'shap/CPSC/shap1-{patient_id}.png')
+    plt.savefig(f'shap/{database}/shap1-{patient_id}.png')
     plt.close(fig)
 
 
-def summary_plot(svs, y_scores):
+def summary_plot(svs, y_scores,database):
     leads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
     svs2 = []
     n = y_scores.shape[0]
@@ -60,11 +63,11 @@ def summary_plot(svs, y_scores):
     svs2 = np.vstack(svs2)
     svs_data = np.mean(svs2, axis=0)
     plt.plot(leads, svs_data)
-    plt.savefig('./shap/summary.png')
+    plt.savefig('./shap/{database}/summary.png')
     plt.clf()
 
 
-def plot_shap2(svs, y_scores, cmap=plt.cm.Blues):
+def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database):
     # population-level interpretation
     leads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
     n = y_scores.shape[0]
@@ -102,7 +105,7 @@ def plot_shap2(svs, y_scores, cmap=plt.cm.Blues):
                     color='white' if ys[i, j] > thresh else 'black')
     np.set_printoptions(precision=2)
     fig.tight_layout()
-    plt.savefig('./shap/shap2.png')
+    plt.savefig('./shap/{database}/shap2.png')
     plt.clf()
     
 
@@ -110,9 +113,14 @@ if __name__ == '__main__':
     args = parse_args()
     data_dir = os.path.normpath(args.data_dir)
     database = os.path.basename(data_dir)
-    args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}.pth'
-    label_csv = os.path.join(data_dir, 'labels.csv')
-    reference_csv = os.path.join(data_dir, 'reference.csv')
+    if not args.model_path:
+        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}.pth'
+    if not args.label_file_name:
+        args.label_file_name = f'labels.csv'
+    if not args.reference_file_name:
+        args.reference_file_name = f'reference.csv'
+    label_csv = os.path.join(data_dir, args.label_file_name)
+    # reference_csv = os.path.join(data_dir, 'reference.csv')
     lleads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
     classes = np.array(['SNR', 'AF', 'IAVB', 'LBBB', 'RBBB', 'PAC', 'PVC', 'STD', 'STE'])
     if args.use_gpu and torch.backends.mps.is_available():
@@ -131,7 +139,7 @@ if __name__ == '__main__':
     model.eval()
 
     background = 100
-    result_path = f'results/A{background * 2}.npy'
+    result_path = f'results/{database}/A{background * 2}.npy'
 
     df_labels = pd.read_csv(label_csv)
     df_reference = pd.read_csv(os.path.join(args.data_dir, 'reference.csv'))
@@ -163,7 +171,7 @@ if __name__ == '__main__':
     svs, y_scores = np.load(result_path, allow_pickle=True)
 
     # summary_plot(svs, y_scores)
-    plot_shap2(svs, y_scores)
+    plot_shap2(svs, y_scores , database)
 
     preds = []
     top_leads_list = []
@@ -177,4 +185,4 @@ if __name__ == '__main__':
         preds.append(classes[label_idx])
         print(patient_id, classes[label_idx], lleads[top_leads])
 
-        plot_shap(ecg_data, sv_data, top_leads, patient_id, classes[label_idx])
+        plot_shap(ecg_data, sv_data, top_leads, patient_id, classes[label_idx] , database)
