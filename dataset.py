@@ -31,6 +31,7 @@ class ECGDataset(Dataset):
     def __init__(self, phase, data_dir, label_csv, folds, leads):
         super(ECGDataset, self).__init__()
         self.phase = phase
+        print(self.phase)
         df = pd.read_csv(label_csv)
         df = df[df['fold'].isin(folds)] if folds is not None else df
         self.data_dir = data_dir
@@ -49,6 +50,9 @@ class ECGDataset(Dataset):
     def __getitem__(self, index: int):
         row = self.labels.iloc[index]
         patient_id = row['patient_id']
+        print(self.phase)
+        if self.phase == "test":
+            print(patient_id)
         ecg_data, _ = wfdb.rdsamp(os.path.join(self.data_dir, patient_id))
         ecg_data = transform(ecg_data, self.phase == 'train')
         nsteps, _ = ecg_data.shape

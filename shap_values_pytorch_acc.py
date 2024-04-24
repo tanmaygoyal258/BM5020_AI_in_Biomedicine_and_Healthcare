@@ -21,6 +21,8 @@ def parse_args():
     parser.add_argument('--model-path' , default = None)
     parser.add_argument('--label-file-name', default=None)
     parser.add_argument('--reference-file-name', default=None)
+    parser.add_argument('--shuffle' , default = False , action = 'store_true')
+    parser.add_argument("--folder-to-save" , default = None)
     return parser.parse_args()
 
 
@@ -48,7 +50,7 @@ def plot_shap(ecg_data, sv_data, top_leads, patient_id, label , database):
         axe.set_xticks([])
         axe.set_yticks([])
         axe.set_ylabel(leads[lead])
-    plt.savefig(f'shap/{database}/shap1-{patient_id}.png')
+    plt.savefig(f'shap/{args.folder_to_save}/shap1-{patient_id}.png')
     plt.close(fig)
 
 
@@ -63,7 +65,7 @@ def summary_plot(svs, y_scores,database):
     svs2 = np.vstack(svs2)
     svs_data = np.mean(svs2, axis=0)
     plt.plot(leads, svs_data)
-    plt.savefig('./shap/{database}/summary.png')
+    plt.savefig('./shap/{args.folder_to_save}/summary.png')
     plt.clf()
 
 
@@ -108,7 +110,7 @@ def plot_shap2(svs, y_scores, cmap=plt.cm.Blues , database = None):
                     color='white' if ys[i, j] > thresh else 'black')
     np.set_printoptions(precision=2)
     fig.tight_layout()
-    plt.savefig(f'./shap/{database}/shap2.png')
+    plt.savefig(f'./shap/{args.folder_to_save}/shap2.png')
     plt.clf()
     
 
@@ -117,11 +119,13 @@ if __name__ == '__main__':
     data_dir = os.path.normpath(args.data_dir)
     database = os.path.basename(data_dir)
     if not args.model_path:
-        args.model_path = f'models/resnet34_{database}_{args.leads}_{args.seed}.pth'
+        args.model_path = f'models/resnet34_{args.folder_to_save}_{args.leads}_{args.seed}.pth'
     if not args.label_file_name:
         args.label_file_name = f'labels.csv'
     if not args.reference_file_name:
         args.reference_file_name = f'reference.csv'
+    if not args.folder_to_save:
+        args.folder_to_save = f'{database}'
     label_csv = os.path.join(data_dir, args.label_file_name)
     # reference_csv = os.path.join(data_dir, 'reference.csv')
     lleads = np.array(['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
@@ -141,20 +145,23 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(args.model_path, map_location=device))
     model.eval()
 
-    background = 1
-    result_path = f'results_{database}/A{background * 2}.npy'
+    background = 100
+    result_path = f'results_{args.folder_to_save}/A{background * 2}.npy'
 
     df_labels = pd.read_csv(label_csv , dtype = {"patient_id" : str})
-    df_reference = pd.read_csv(os.path.join(args.data_dir, args.reference_file_name) , dtype = {"patient_id" : str})
-    df = pd.merge(df_labels, df_reference[['patient_id', 'age', 'sex', 'signal_len']], on='patient_id', how='left')
-
-    # df = df[df['signal_len'] >= 15000]
+    # df_reference = pd.read_csv(os.path.join(args.data_dir, args.reference_file_name) , dtype = {"patient_id" : str})
+    # df = pd.merge(df_labels, df_reference[['patient_id', 'age', 'sex', 'signal_len']], on='patient_id', how='left')
+    df = df_labels
+    # df =  df[df['signal_len'] >= 15000]
 
     patient_ids = df['patient_id'].to_numpy()
-    to_explain = patient_ids[:background * 2]
-
+    random_indices = np.random.choice([i for i in range(len(patient_ids))] , background*2 , replace= False)
+    to_explain = patient_ids[:background * 2] if not args.shuffle else patient_ids[random_indices] 
     background_patient_ids = df.head(background)['patient_id'].to_numpy()
-    background_inputs = [os.path.join(data_dir, patient_id) for patient_id in background_patient_ids]
+    if database != 'combined_data':
+        background_inputs = [os.path.join(data_dir, patient_id) for patient_id in background_patient_ids]
+    else:
+        background_inputs = [os.path.join('data/CPSC', patient_id) if 'A' in patient_id else os.path.join('data/PTB_XL', patient_id) for patient_id in background_patient_ids]
     background_inputs = torch.stack([torch.from_numpy(prepare_input(input)).float() for input in background_inputs]).to(device)
     
     e = shap.GradientExplainer(model, background_inputs)
@@ -163,7 +170,13 @@ if __name__ == '__main__':
     y_scores = []
     if not os.path.exists(result_path):
         for patient_id in tqdm(to_explain):
-            input = os.path.join(data_dir, patient_id)
+            if database != "combined_data":
+                input = os.path.join(data_dir, patient_id)
+            else:
+                if 'A' in patient_id:
+                    input = os.path.join('data/CPSC', patient_id)
+                else:
+                    input = os.path.join('data/PTB_XL', patient_id)
             inputs = torch.stack([torch.from_numpy(prepare_input(input)).float()]).to(device)
             y_scores.append(torch.sigmoid(model(inputs)).detach().cpu().numpy())
             sv = np.array(e.shap_values(inputs)) # (n_classes, n_samples, n_leads, n_points)
@@ -180,9 +193,15 @@ if __name__ == '__main__':
 
     preds = []
     top_leads_list = []
-    with open(f'shap/{database}/top_leads_list', 'w') as f:
+    with open(f'shap/{args.folder_to_save}/top_leads_list.txt', 'w') as f:
         for i, patient_id in enumerate(to_explain):
-            ecg_data = prepare_input(os.path.join(data_dir, patient_id))
+            if database != "combined_data":
+                ecg_data = prepare_input(os.path.join(data_dir, patient_id))
+            else:
+                if 'A' in patient_id:
+                    ecg_data = prepare_input(os.path.join('data/CPSC', patient_id))
+                else:
+                    ecg_data = prepare_input(os.path.join('data/PTB_XL', patient_id))
             label_idx = np.argmax(y_scores[i])
             sv_data = svs[label_idx, i]
             

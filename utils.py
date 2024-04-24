@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, roc_auc_score
 import wfdb
+import scipy
+import os
 
 
 def split_data(seed=42):
@@ -10,9 +12,13 @@ def split_data(seed=42):
 
 
 def prepare_input(ecg_file: str):
-    if ecg_file.endswith('.mat'):
-        ecg_file = ecg_file[:-4]
-    ecg_data, _ = wfdb.rdsamp(ecg_file)
+    if 'A' in ecg_file:
+        if ecg_file.endswith('.mat'):
+            ecg_file = ecg_file[:-4]
+        ecg_data, _ = wfdb.rdsamp(ecg_file)
+    else:
+        ecg_file = str(ecg_file) + ".mat"
+        ecg_data = scipy.io.loadmat(ecg_file)['val']
     nsteps, nleads = ecg_data.shape
     ecg_data = ecg_data[-15000:, :]
     result = np.zeros((15000, nleads)) # 30 s, 500 Hz

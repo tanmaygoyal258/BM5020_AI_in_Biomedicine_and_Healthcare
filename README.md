@@ -67,3 +67,8 @@ $ python3 main_retraining.py --epochs 30 --resume --use-gpu --original-model-pat
 ```sh
 $ python3 main_combined.py --data-dir data/combined_data --epochs 30 --use-gpu 
 ```
+
+# SHAP values for combined model
+```sh
+$ python3 shap_values_pytorch_acc.py --data-dir data/combined_data --use-gpu --model-path models/resnet34_combined_12_42_30.pth --folder-to-save newmodel_combined --label-file-name labels_combined.csv --shuffle
+```

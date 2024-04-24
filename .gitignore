@@ -31,5 +31,6 @@ logs/ecg-*
 logs/*.log
 logs/*.csv
 shap/**/*.png
+shap/**/*.txt
 plots/*.png
 PTB_XL_notes.txt

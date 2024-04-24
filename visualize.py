@@ -28,8 +28,10 @@ def plot_ecg2(leads, data, title):
     n_cols=2
     n_rows = len(leads) // n_cols
     f, axs = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8))
+    print(data.shape)
     for j in range(n_rows):
         for i in range(n_cols):
+            print(i , j , data[i * n_rows + j].shape)
             axs[j, i].plot(data[i * n_rows + j])
             axs[j, i].spines['top'].set_visible(False)
             axs[j, i].spines['right'].set_visible(False)
@@ -53,5 +55,7 @@ if __name__ == "__main__":
         patient_id = os.path.basename(mat_file)
         ecg_data, meta_data = wfdb.rdsamp(mat_file)
         leads = meta_data['sig_name']
-        plot_ecg(leads=leads, data=ecg_data.T, title=os.path.basename(mat_file))
+        print(ecg_data.shape)
+        print(leads)
+        # plot_ecg(leads=leads, data=ecg_data.T, title=os.path.basename(mat_file))
         plot_ecg2(leads=leads, data=ecg_data.T, title=os.path.basename(mat_file))

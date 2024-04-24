@@ -46,6 +46,7 @@ class ResNet1d(nn.Module):
         self.adaptivemaxpool = nn.AdaptiveMaxPool1d(1)
         self.fc = nn.Linear(512 * block.expansion * 2, num_classes)
         self.dropout = nn.Dropout(0.2)
+        self.gradients = None
     
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -63,6 +64,9 @@ class ResNet1d(nn.Module):
             layers.append(block(self.inplanes, planes))
         return nn.Sequential(*layers)
 
+    def activation_hooks(self, grad):
+        self.gradients = grad
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -72,12 +76,26 @@ class ResNet1d(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
+        h = x.register_hook(self.activation_hooks)
         x1 = self.adaptiveavgpool(x)
         x2 = self.adaptivemaxpool(x)
         x = torch.cat((x1, x2), dim=1)
         x = x.view(x.size(0), -1)
         return self.fc(x)
 
+    def get_activations_gradient(self):
+        return self.gradients
+
+    def get_activations(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        return x
 
 def resnet18(**kwargs):
     model = ResNet1d(BasicBlock1d, [2, 2, 2, 2], **kwargs)
