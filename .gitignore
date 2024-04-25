@@ -33,4 +33,5 @@ logs/*.csv
 shap/**/*.png
 shap/**/*.txt
 plots/*.png
+gradcams/**/*.png
 PTB_XL_notes.txt
