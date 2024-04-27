@@ -54,21 +54,21 @@ $ python predict.py --data-dir data/CPSC --leads all --use-gpu # evaluation
 $ python shap_values.py --data-dir data/CPSC --use-gpu # visualizing shap values
 ```
 
-# Predicting for PTB_Xl on original model
+### Predicting for PTB_Xl on original model
 ```sh
 $ python3 predict_PTB_XL.py --epochs 30 --use-gpu --model-path models/resnet34_CPSC_all_42_30.pth --threshold-path models/CPSC-threshold.pkl
 ```
-# Retraining original model on PTB_XL data;
+### Retraining original model on PTB_XL data;
 ```sh
 $ python3 main_retraining.py --epochs 30 --resume --use-gpu --original-model-path models/resnet34_CPSC_all_42_30.pth 
 ```
 
-# Creating model on both datasets from scratch
+### Creating model on both datasets from scratch
 ```sh
 $ python3 main_combined.py --data-dir data/combined_data --epochs 30 --use-gpu 
 ```
 
-# SHAP values for combined model
+### SHAP values for combined model
 ```sh
 $ python3 shap_values_pytorch_acc.py --data-dir data/combined_data --use-gpu --model-path models/resnet34_combined_12_42_30.pth --folder-to-save newmodel_combined --label-file-name labels_combined.csv --shuffle
 ```

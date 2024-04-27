@@ -97,7 +97,7 @@ if __name__ == "__main__":
             ax.set_ylabel(list_leads[i])
             yabs_max = abs(max(ax.get_ylim(), key=abs))
             ax.set_ylim(ymin=-yabs_max, ymax=yabs_max)
-            ax.set_xlim(0 , 1000)
+            ax.set_xlim(0 , file_data.shape[0])
             xlim = ax.get_xlim()
             ylim = ax.get_ylim()
             ax.imshow(heatmap.T, extent=[*xlim, *ylim], cmap='Reds', alpha=0.6, aspect=100)
